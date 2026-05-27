@@ -1,0 +1,41 @@
+1. Datos de partida (VCF → filtrado inicial)
+Selección de SNPs bialélicos (solo SNPs, sin indels)
+bcftools view -m2 -M2 -v snps input.vcf.gz -Oz -o snps.vcf.gz
+2. Indexado
+tabix -p vcf snps.vcf.gz
+3. Filtrado de calidad (MAF + missing data)
+vcftools --gzvcf snps.vcf.gz \
+--maf 0.05 \
+--max-missing 0.8 \
+--recode \
+--out filtered
+3. Indexado del archivo 
+$ tabix -p vcf snps.vcf.gz
+4. Conversión a formato PLINK (matriz de genotipos)
+plink --vcf filtered.recode.vcf \
+--make-bed \
+--out heliantus
+Esto genera:
+.bed → matriz binaria de genotipos
+.bim → lista de SNPs
+.fam → individuos
+5. LD pruning (eliminación de redundancia genética)
+plink --bfile heliantus \
+--indep-pairwise 50 5 0.2 \
+--out pruned
+6. PCA (reducción de dimensionalidad)
+plink --bfile heliantus \
+--extract pruned.prune.in \
+--pca 10 \
+--out pca_result
+7. Una vez se ha ejecutado el archivo .py, se puede hacer el análisis FST
+Lo separamos en clusters
+awk '$3==0 {print $1, $2}' clusters.tsv > cluster0.txt
+awk '$3==1 {print $1, $2}' clusters.tsv > cluster1.txt
+awk '$3==2 {print $1, $2}' clusters.tsv > cluster2.txt
+awk '$3==3 {print $1, $2}' clusters.tsv > cluster3.txt
+8. cuánta diferenciación genética hay entre dos poblaciones
+plink --bfile heliantus \
+      --fst \
+      --within clusters.tsv \
+      --out fst_results
