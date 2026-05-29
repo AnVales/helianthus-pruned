@@ -156,3 +156,24 @@ ax.set_title("PCA 3D + clustering")
 
 plt.legend()
 plt.show()
+
+# =========================
+# 9. EXPORTAR CLUSTERS PARA FST
+# =========================
+
+for i in range(k):
+
+    subset = df[df["cluster"] == i]
+
+    subset_ids = pd.DataFrame({
+        0: subset["FID"].astype(str) + "_" + subset["IID"].astype(str)
+    })
+
+    subset_ids.to_csv(
+        f"cluster{i}.txt",
+        sep="\t",
+        index=False,
+        header=False
+    )
+
+print("\nArchivos cluster*.txt exportados correctamente.")
